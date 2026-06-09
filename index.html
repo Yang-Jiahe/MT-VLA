@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MT-VLA | Task-Semantics-Driven Expert Adaptation</title>
+    <meta
+      name="description"
+      content="Project page for MT-VLA: Task-Semantics-Driven Expert Adaptation for Multi-Task Vision-Language-Action Models."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="MT-VLA home">MT-VLA</a>
+      <nav class="nav-links">
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#robot">Robot</a>
+        <a href="#citation">Citation</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero section-band">
+        <div class="container hero-inner">
+          <p class="venue">CoRL 2026 Submission</p>
+          <h1>MT-VLA: Task-Semantics-Driven Expert Adaptation for Multi-Task Vision-Language-Action Models</h1>
+          <div class="authors" aria-label="Authors and affiliations">
+            <p>
+              Jiahe Yang<sup>1,2</sup><sup>*</sup>,
+              Ziwei Yan<sup>2</sup>,
+              Tiancai Wang<sup>2</sup>,
+              Chen Tang<sup>1</sup>,
+              Zhong Ji<sup>1</sup><sup>&dagger;</sup>
+            </p>
+            <p class="affiliations">
+              <sup>1</sup> Tianjin University &nbsp;&nbsp; <sup>2</sup> Dexmal
+            </p>
+            <p class="author-notes">
+              <sup>*</sup> Work done during Jiahe Yang's internship at Dexmal.
+              <sup>&dagger;</sup> Corresponding Author.
+            </p>
+          </div>
+          <p class="tagline">
+            A unified multi-task post-training framework that injects task semantics into VLA action
+            generation, combines shared action priors with task-specialized experts, and reduces
+            cross-task gradient conflict.
+          </p>
+          <div class="action-row" aria-label="Project links">
+            <a class="button button-primary" href="MT_VLA-final.pdf">Paper PDF</a>
+            <a class="button" href="https://github.com/Yang-Jiahe/MT-VLA">GitHub</a>
+            <a class="button" href="#citation">BibTeX</a>
+          </div>
+          <figure class="hero-figure">
+            <img
+              src="assets/figures/overview.png"
+              alt="Overview comparing single-task fine-tuning, standard multi-task fine-tuning, and MT-VLA."
+            >
+            <figcaption>
+              MT-VLA keeps a single policy for all tasks while adding task-semantic adaptation for
+              stronger scalability and multi-task performance.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="highlights-title">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Key Results</p>
+            <h2 id="highlights-title">One Policy, Stronger Multi-Task Performance</h2>
+          </div>
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-label">LIBERO Avg.</span>
+              <strong>+5.1</strong>
+              <span class="metric-detail">over the same unified &pi;<sub>0</sub> setting (90.3 -> 95.4)</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Meta-World MT50 Avg.</span>
+              <strong>+8.4</strong>
+              <span class="metric-detail">over the same unified &pi;<sub>0</sub> setting (57.1 -> 65.5)</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">RoboTwin 2.0 Hard 5-task</span>
+              <strong>+8.8</strong>
+              <span class="metric-detail">over the same unified &pi;<sub>0</sub> setting (42.2 -> 51.0)</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">RoboTwin 2.0 Hard 10-task</span>
+              <strong>+7.4</strong>
+              <span class="metric-detail">over the same unified &pi;<sub>0</sub> setting (30.4 -> 37.8)</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Real Robot Avg.</span>
+              <strong>+14.6</strong>
+              <span class="metric-detail">over the same unified &pi;<sub>0</sub> setting (14.7 -> 29.3)</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="abstract" class="section section-muted" aria-labelledby="abstract-title">
+        <div class="container text-layout">
+          <div class="section-heading">
+            <p class="eyebrow">Abstract</p>
+            <h2 id="abstract-title">Task Semantics for Scalable VLA Post-Training</h2>
+          </div>
+          <div class="prose">
+            <p>
+              Vision-Language-Action (VLA) models have shown strong potential for general-purpose
+              robotic perception, language understanding, and control, yet their post-training
+              remains difficult to scale. Fine-tuning a separate policy for each task often yields
+              strong task-specific performance, but it requires training and maintaining many models.
+              Training a single policy across multiple tasks is more scalable, but it often suffers
+              from heterogeneous action distributions, interference between task semantics, and
+              conflicting optimization signals.
+            </p>
+            <p>
+              MT-VLA addresses this problem with a task-semantics-driven framework for unified
+              multi-task post-training. It explicitly injects task semantics into action generation,
+              decomposes the policy space with structured expert adaptation, and applies task-aware
+              gradient decoupling to reduce optimization conflicts. Experiments on LIBERO,
+              Meta-World, RoboTwin 2.0, and real-world bimanual robot tasks show consistent gains
+              over standard multi-task post-training.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="method" class="section" aria-labelledby="method-title">
+        <div class="container">
+          <div class="section-heading compact">
+            <p class="eyebrow">Method</p>
+            <h2 id="method-title">Task-Semantic Expert Adaptation</h2>
+            <p>
+              MT-VLA leaves the VLM backbone intact and adapts the action-generation path, making
+              the framework applicable across different VLA architectures.
+            </p>
+          </div>
+          <figure class="paper-figure wide">
+            <img
+              src="assets/figures/framework.png"
+              alt="MT-VLA framework showing multi-task data, task-semantic token construction, VLA backbone, and TSMoE block."
+            >
+          </figure>
+          <div class="method-grid">
+            <article>
+              <h3>TStoken</h3>
+              <p>
+                Constructs a task-semantic token from language instructions and injects it into the
+                action-side sequence for explicit task conditioning.
+              </p>
+            </article>
+            <article>
+              <h3>TSMoE</h3>
+              <p>
+                Routes action-side hidden states through lightweight low-rank experts while
+                retaining a shared branch for task-invariant action priors.
+              </p>
+            </article>
+            <article>
+              <h3>TGD</h3>
+              <p>
+                Groups samples by instruction semantics and projects conflicting shared-parameter
+                gradients to stabilize multi-task optimization.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-muted" aria-labelledby="backbone-title">
+        <div class="container two-column">
+          <div>
+            <p class="eyebrow">Backbone Compatibility</p>
+            <h2 id="backbone-title">Plug-and-Play Across VLA Architectures</h2>
+            <p>
+              The framework is decoupled from a specific action-generation paradigm. The paper
+              applies MT-VLA to &pi;<sub>0</sub>, GR00T N1, and OpenVLA-OFT by inserting TStoken
+              and TSMoE blocks into the action expert path without modifying the VLM backbone.
+            </p>
+          </div>
+          <figure class="paper-figure">
+            <img
+              src="assets/figures/compatibility.png"
+              alt="MT-VLA integration with pi zero, GR00T N1, and OpenVLA-OFT backbones."
+            >
+          </figure>
+        </div>
+      </section>
+
+      <section id="results" class="section" aria-labelledby="results-title">
+        <div class="container">
+          <div class="section-heading compact">
+            <p class="eyebrow">Experiments</p>
+            <h2 id="results-title">Consistent Gains in Simulation</h2>
+            <p>
+              Across LIBERO, Meta-World MT50, and RoboTwin 2.0, MT-VLA improves the standard
+              multi-task baseline and narrows the gap to single-task specialists. For RoboTwin,
+              avg. denotes the mean success rate across Easy and Hard settings.
+            </p>
+          </div>
+          <div class="result-strip">
+            <article>
+              <span>LIBERO</span>
+              <strong>90.3 -> 95.4</strong>
+              <p>average success rate under the &pi;<sub>0</sub> multi-task setting</p>
+            </article>
+            <article>
+              <span>Meta-World</span>
+              <strong>57.1 -> 65.5</strong>
+              <p>average success rate on MT50 difficulty groups</p>
+            </article>
+            <article>
+              <span>RoboTwin 2.0 5-task Avg.</span>
+              <strong>63.9 -> 70.3</strong>
+              <p>average of Easy and Hard success rates</p>
+            </article>
+            <article>
+              <span>RoboTwin 2.0 10-task Avg.</span>
+              <strong>56.2 -> 61.1</strong>
+              <p>average of Easy and Hard success rates</p>
+            </article>
+          </div>
+          <div class="table-panel">
+            <div class="table-heading">
+              <h3>LIBERO and Meta-World Simulation Benchmarks</h3>
+              <p>Success rates (%) from the main simulation benchmark table.</p>
+            </div>
+            <div class="table-scroll" role="region" aria-label="LIBERO benchmark results" tabindex="0">
+              <table class="data-table">
+                <caption>LIBERO success rates (%)</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Paradigm</th>
+                    <th scope="col">Method</th>
+                    <th scope="col">Spatial</th>
+                    <th scope="col">Object</th>
+                    <th scope="col">Goal</th>
+                    <th scope="col">Long</th>
+                    <th scope="col">Avg.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="rowgroup" rowspan="6">Specialist</th>
+                    <td>OpenVLA</td>
+                    <td>84.7</td>
+                    <td>88.4</td>
+                    <td>79.2</td>
+                    <td>53.7</td>
+                    <td>76.5</td>
+                  </tr>
+                  <tr>
+                    <td>WorldVLA</td>
+                    <td>87.6</td>
+                    <td>96.2</td>
+                    <td>83.4</td>
+                    <td>60.0</td>
+                    <td>81.8</td>
+                  </tr>
+                  <tr>
+                    <td>NORA</td>
+                    <td>92.2</td>
+                    <td>95.4</td>
+                    <td>89.4</td>
+                    <td>74.6</td>
+                    <td>87.9</td>
+                  </tr>
+                  <tr>
+                    <td>&pi;<sub>0</sub></td>
+                    <td>94.0</td>
+                    <td>94.8</td>
+                    <td>92.6</td>
+                    <td>82.2</td>
+                    <td>90.9</td>
+                  </tr>
+                  <tr>
+                    <td>GR00T N1</td>
+                    <td>93.0</td>
+                    <td>99.6</td>
+                    <td>95.2</td>
+                    <td>91.4</td>
+                    <td>94.8</td>
+                  </tr>
+                  <tr>
+                    <td>OpenVLA-OFT</td>
+                    <td>97.1</td>
+                    <td>99.3</td>
+                    <td>97.6</td>
+                    <td>91.8</td>
+                    <td>96.5</td>
+                  </tr>
+                  <tr class="group-start">
+                    <th scope="rowgroup" rowspan="12">Multitask</th>
+                    <td>SmoVLA</td>
+                    <td>93.0</td>
+                    <td>94.0</td>
+                    <td>91.0</td>
+                    <td>77.0</td>
+                    <td>88.8</td>
+                  </tr>
+                  <tr>
+                    <td>DM0</td>
+                    <td>98.2</td>
+                    <td>98.8</td>
+                    <td>96.6</td>
+                    <td>82.6</td>
+                    <td>94.1</td>
+                  </tr>
+                  <tr>
+                    <td>UnifiedVLA</td>
+                    <td>95.4</td>
+                    <td>98.8</td>
+                    <td>93.6</td>
+                    <td>94.0</td>
+                    <td>95.5</td>
+                  </tr>
+                  <tr class="baseline-row">
+                    <td>&pi;<sub>0</sub> baseline</td>
+                    <td>93.9</td>
+                    <td>95.3</td>
+                    <td>91.4</td>
+                    <td>80.4</td>
+                    <td>90.3</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>&pi;<sub>0</sub> MT-VLA</td>
+                    <td>98.6</td>
+                    <td>95.0</td>
+                    <td>95.4</td>
+                    <td>91.6</td>
+                    <td>95.4</td>
+                  </tr>
+                  <tr class="delta-row">
+                    <td>Improvement</td>
+                    <td>+4.7</td>
+                    <td>-0.3</td>
+                    <td>+4.0</td>
+                    <td>+11.2</td>
+                    <td>+5.1</td>
+                  </tr>
+                  <tr class="baseline-row">
+                    <td>GR00T N1 baseline</td>
+                    <td>88.4</td>
+                    <td>98.4</td>
+                    <td>96.8</td>
+                    <td>90.4</td>
+                    <td>93.5</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>GR00T N1 MT-VLA</td>
+                    <td>93.0</td>
+                    <td>98.6</td>
+                    <td>97.4</td>
+                    <td>93.4</td>
+                    <td>95.6</td>
+                  </tr>
+                  <tr class="delta-row">
+                    <td>Improvement</td>
+                    <td>+4.6</td>
+                    <td>+0.2</td>
+                    <td>+0.6</td>
+                    <td>+3.0</td>
+                    <td>+2.1</td>
+                  </tr>
+                  <tr class="baseline-row">
+                    <td>OpenVLA-OFT baseline</td>
+                    <td>96.6</td>
+                    <td>99.2</td>
+                    <td>96.0</td>
+                    <td>92.2</td>
+                    <td>96.0</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>OpenVLA-OFT MT-VLA</td>
+                    <td>98.6</td>
+                    <td>99.6</td>
+                    <td>97.8</td>
+                    <td>96.0</td>
+                    <td>98.0</td>
+                  </tr>
+                  <tr class="delta-row">
+                    <td>Improvement</td>
+                    <td>+2.0</td>
+                    <td>+0.4</td>
+                    <td>+1.8</td>
+                    <td>+3.8</td>
+                    <td>+2.0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="table-scroll" role="region" aria-label="Meta-World benchmark results" tabindex="0">
+              <table class="data-table compact-table">
+                <caption>Meta-World MT50 success rates (%)</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Paradigm</th>
+                    <th scope="col">Method</th>
+                    <th scope="col">Easy</th>
+                    <th scope="col">Medium</th>
+                    <th scope="col">Hard</th>
+                    <th scope="col">Very Hard</th>
+                    <th scope="col">Avg.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="rowgroup" rowspan="6">Multitask</th>
+                    <td>Diffusion Policy</td>
+                    <td>23.1</td>
+                    <td>10.7</td>
+                    <td>1.9</td>
+                    <td>6.1</td>
+                    <td>10.5</td>
+                  </tr>
+                  <tr>
+                    <td>TinyVLA</td>
+                    <td>77.6</td>
+                    <td>21.5</td>
+                    <td>11.4</td>
+                    <td>15.8</td>
+                    <td>31.6</td>
+                  </tr>
+                  <tr>
+                    <td>SmoVLA</td>
+                    <td>87.1</td>
+                    <td>51.8</td>
+                    <td>70.0</td>
+                    <td>64.0</td>
+                    <td>68.2</td>
+                  </tr>
+                  <tr class="baseline-row">
+                    <td>&pi;<sub>0</sub> baseline</td>
+                    <td>71.1</td>
+                    <td>53.6</td>
+                    <td>51.7</td>
+                    <td>52.0</td>
+                    <td>57.1</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>&pi;<sub>0</sub> MT-VLA</td>
+                    <td>77.9</td>
+                    <td>63.6</td>
+                    <td>58.3</td>
+                    <td>62.0</td>
+                    <td>65.5</td>
+                  </tr>
+                  <tr class="delta-row">
+                    <td>Improvement</td>
+                    <td>+6.8</td>
+                    <td>+10.0</td>
+                    <td>+6.6</td>
+                    <td>+10.0</td>
+                    <td>+8.4</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-panel">
+            <div class="table-heading">
+              <h3>RoboTwin 2.0 Simulation Benchmark</h3>
+              <p>Success rates (%) under Easy and Hard settings. Avg. is the mean of Easy and Hard.</p>
+            </div>
+            <div class="table-scroll" role="region" aria-label="RoboTwin benchmark results" tabindex="0">
+              <table class="data-table robotwin-table">
+                <caption>RoboTwin 2.0 aggregate success rates (%)</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Setting</th>
+                    <th scope="col">Specialist &pi;<sub>0</sub></th>
+                    <th scope="col">Multitask &pi;<sub>0</sub></th>
+                    <th scope="col">MT-VLA</th>
+                    <th scope="col">Improvement</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">5-task Easy</th>
+                    <td>80.2</td>
+                    <td>85.6</td>
+                    <td>89.6</td>
+                    <td class="delta">+4.0</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">5-task Hard</th>
+                    <td>48.8</td>
+                    <td>42.2</td>
+                    <td>51.0</td>
+                    <td class="delta">+8.8</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <th scope="row">5-task Avg.</th>
+                    <td>64.5</td>
+                    <td>63.9</td>
+                    <td>70.3</td>
+                    <td class="delta">+6.4</td>
+                  </tr>
+                  <tr class="group-start">
+                    <th scope="row">10-task Easy</th>
+                    <td>73.1</td>
+                    <td>81.9</td>
+                    <td>84.3</td>
+                    <td class="delta">+2.4</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">10-task Hard</th>
+                    <td>40.3</td>
+                    <td>30.4</td>
+                    <td>37.8</td>
+                    <td class="delta">+7.4</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <th scope="row">10-task Avg.</th>
+                    <td>56.7</td>
+                    <td>56.2</td>
+                    <td>61.1</td>
+                    <td class="delta">+4.9</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="robot" class="section section-muted" aria-labelledby="robot-title">
+        <div class="container robot-layout">
+          <div>
+            <p class="eyebrow">Real Robot</p>
+            <h2 id="robot-title">ALOHA Bimanual Manipulation</h2>
+            <p>
+              The real-world evaluation covers 10 long-horizon bimanual tasks, including cleaning,
+              packing, placing, wiping, stamping, and wrapping. MT-VLA follows the same multi-task
+              data protocol as the baseline and improves process scores on every reported task.
+            </p>
+            <div class="robot-stats" aria-label="Real robot summary">
+              <span><strong>10</strong> tasks</span>
+              <span><strong>+14.6</strong> avg. score gain</span>
+              <span><strong>~2x</strong> over the baseline</span>
+            </div>
+          </div>
+          <figure class="robot-chart-card">
+            <figcaption>
+              <strong>Real-world process scores</strong>
+              <span>Specialist, Multitask, and MT-VLA across 10 ALOHA tasks.</span>
+            </figcaption>
+            <div class="chart-legend" aria-hidden="true">
+              <span><i class="legend-specialist"></i>specialist</span>
+              <span><i class="legend-multitask"></i>multitask</span>
+              <span><i class="legend-mtvla"></i>MT-VLA</span>
+            </div>
+            <div
+              class="robot-chart"
+              role="img"
+              aria-label="Real robot process scores. Task 1: specialist 66, multitask 30, MT-VLA 47. Task 2: 33, 15, 27. Task 3: 18, 0, 8. Task 4: 31.5, 8, 20.5. Task 5: 49, 18, 35. Task 6: 20, 6, 14. Task 7: 72, 26, 49.5. Task 8: 53, 23, 37. Task 9: 57.5, 17, 35. Task 10: 36, 4, 20."
+            >
+              <div class="chart-y-axis" aria-hidden="true">
+                <span>80</span>
+                <span>60</span>
+                <span>40</span>
+                <span>20</span>
+                <span>0</span>
+              </div>
+              <div class="chart-scroll">
+                <div class="chart-plot">
+                  <div class="chart-grid-lines" aria-hidden="true">
+                    <span style="--y: 0%"></span>
+                    <span style="--y: 25%"></span>
+                    <span style="--y: 50%"></span>
+                    <span style="--y: 75%"></span>
+                    <span style="--y: 100%"></span>
+                  </div>
+                  <div class="bar-groups" aria-hidden="true">
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 82.5%" title="task 1 specialist: 66"></span>
+                        <span class="bar multitask" style="--h: 37.5%" title="task 1 multitask: 30"></span>
+                        <span class="bar mtvla" style="--h: 58.75%" title="task 1 MT-VLA: 47"></span>
+                      </div>
+                      <span class="bar-label">task 1</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 41.25%" title="task 2 specialist: 33"></span>
+                        <span class="bar multitask" style="--h: 18.75%" title="task 2 multitask: 15"></span>
+                        <span class="bar mtvla" style="--h: 33.75%" title="task 2 MT-VLA: 27"></span>
+                      </div>
+                      <span class="bar-label">task 2</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 22.5%" title="task 3 specialist: 18"></span>
+                        <span class="bar multitask" style="--h: 0%" title="task 3 multitask: 0"></span>
+                        <span class="bar mtvla" style="--h: 10%" title="task 3 MT-VLA: 8"></span>
+                      </div>
+                      <span class="bar-label">task 3</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 39.375%" title="task 4 specialist: 31.5"></span>
+                        <span class="bar multitask" style="--h: 10%" title="task 4 multitask: 8"></span>
+                        <span class="bar mtvla" style="--h: 25.625%" title="task 4 MT-VLA: 20.5"></span>
+                      </div>
+                      <span class="bar-label">task 4</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 61.25%" title="task 5 specialist: 49"></span>
+                        <span class="bar multitask" style="--h: 22.5%" title="task 5 multitask: 18"></span>
+                        <span class="bar mtvla" style="--h: 43.75%" title="task 5 MT-VLA: 35"></span>
+                      </div>
+                      <span class="bar-label">task 5</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 25%" title="task 6 specialist: 20"></span>
+                        <span class="bar multitask" style="--h: 7.5%" title="task 6 multitask: 6"></span>
+                        <span class="bar mtvla" style="--h: 17.5%" title="task 6 MT-VLA: 14"></span>
+                      </div>
+                      <span class="bar-label">task 6</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 90%" title="task 7 specialist: 72"></span>
+                        <span class="bar multitask" style="--h: 32.5%" title="task 7 multitask: 26"></span>
+                        <span class="bar mtvla" style="--h: 61.875%" title="task 7 MT-VLA: 49.5"></span>
+                      </div>
+                      <span class="bar-label">task 7</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 66.25%" title="task 8 specialist: 53"></span>
+                        <span class="bar multitask" style="--h: 28.75%" title="task 8 multitask: 23"></span>
+                        <span class="bar mtvla" style="--h: 46.25%" title="task 8 MT-VLA: 37"></span>
+                      </div>
+                      <span class="bar-label">task 8</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 71.875%" title="task 9 specialist: 57.5"></span>
+                        <span class="bar multitask" style="--h: 21.25%" title="task 9 multitask: 17"></span>
+                        <span class="bar mtvla" style="--h: 43.75%" title="task 9 MT-VLA: 35"></span>
+                      </div>
+                      <span class="bar-label">task 9</span>
+                    </div>
+                    <div class="bar-group">
+                      <div class="bars">
+                        <span class="bar specialist" style="--h: 45%" title="task 10 specialist: 36"></span>
+                        <span class="bar multitask" style="--h: 5%" title="task 10 multitask: 4"></span>
+                        <span class="bar mtvla" style="--h: 25%" title="task 10 MT-VLA: 20"></span>
+                      </div>
+                      <span class="bar-label">task 10</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section id="citation" class="section section-muted" aria-labelledby="citation-title">
+        <div class="container citation-layout">
+          <div>
+            <p class="eyebrow">Citation</p>
+            <h2 id="citation-title">BibTeX</h2>
+          </div>
+          <div class="bibtex-block">
+            <button class="copy-button" type="button" data-copy-target="bibtex">Copy</button>
+            <pre id="bibtex"><code>@inproceedings{yang2026mtvla,
+  title={MT-VLA: Task-Semantics-Driven Expert Adaptation for Multi-Task Vision-Language-Action Models},
+  author={Yang, Jiahe and Yan, Ziwei and Wang, Tiancai and Tang, Chen and Ji, Zhong},
+  booktitle={Submitted to the 10th Conference on Robot Learning},
+  year={2026}
+}</code></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>MT-VLA project page. CoRL 2026 submission.</p>
+        <a href="#top">Back to top</a>
+      </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
